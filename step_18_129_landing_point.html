@@ -1,0 +1,150 @@
+
+<h2 class="sr-only">Diagram showing where step 18.129 lands on the complex spiral, between integer steps 18 and 19, slightly past the negative real axis in quadrant III.</h2>
+<div style="padding: 1rem 0;">
+
+<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 1.5rem;">
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 1rem;">
+<div style="font-size: 12px; color: var(--color-text-secondary);">Landing point</div>
+<div style="font-size: 16px; font-weight: 500; font-family: var(--font-mono);">−0.00366 − 0.00075i</div>
+</div>
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 1rem;">
+<div style="font-size: 12px; color: var(--color-text-secondary);">Phase (reduced)</div>
+<div style="font-size: 16px; font-weight: 500;">191.61° — quadrant III</div>
+</div>
+<div style="background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 1rem;">
+<div style="font-size: 12px; color: var(--color-text-secondary);">Magnitude</div>
+<div style="font-size: 16px; font-weight: 500; font-family: var(--font-mono);">≈ 1/268</div>
+</div>
+</div>
+
+<div style="position: relative; width: 100%; height: 500px;">
+<canvas id="landingChart" role="img" aria-label="Scatter plot of the complex spiral with step 18.129 highlighted between steps 18 and 19">Landing point data</canvas>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+
+function stepPoint(n) {
+  const mag = Math.pow(2, 1 - n / 2);
+  const phase = n * Math.PI / 2;
+  return { x: mag * Math.cos(phase), y: mag * Math.sin(phase), n };
+}
+
+const intSteps = [];
+for (let i = 1; i <= 24; i++) intSteps.push(stepPoint(i));
+
+const smoothPoints = [];
+for (let t = 1; t <= 24; t += 0.05) smoothPoints.push(stepPoint(t));
+
+const target = stepPoint(18.129);
+const s18 = stepPoint(18);
+const s19 = stepPoint(19);
+
+const zoomPoints = [];
+for (let t = 17; t <= 19.5; t += 0.01) zoomPoints.push(stepPoint(t));
+
+const chart = new Chart(document.getElementById('landingChart'), {
+  type: 'scatter',
+  data: {
+    datasets: [
+      {
+        label: 'Spiral path',
+        data: smoothPoints.map(p => ({ x: p.x, y: p.y })),
+        pointRadius: 0,
+        showLine: true,
+        borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+        borderWidth: 1.5,
+        tension: 0
+      },
+      {
+        label: 'Integer steps',
+        data: intSteps.map(p => ({ x: p.x, y: p.y })),
+        pointBackgroundColor: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)',
+        pointBorderColor: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.2)',
+        pointRadius: 3,
+        showLine: false
+      },
+      {
+        label: 'Steps 17-19 arc',
+        data: zoomPoints.map(p => ({ x: p.x, y: p.y })),
+        pointRadius: 0,
+        showLine: true,
+        borderColor: '#534AB7',
+        borderWidth: 2.5,
+        tension: 0
+      },
+      {
+        label: 'Step 18',
+        data: [{ x: s18.x, y: s18.y }],
+        pointBackgroundColor: '#0F6E56',
+        pointBorderColor: '#0F6E56',
+        pointRadius: 7,
+        pointStyle: 'circle'
+      },
+      {
+        label: 'Step 18.129',
+        data: [{ x: target.x, y: target.y }],
+        pointBackgroundColor: '#D85A30',
+        pointBorderColor: '#D85A30',
+        pointRadius: 10,
+        pointStyle: 'star'
+      },
+      {
+        label: 'Step 19',
+        data: [{ x: s19.x, y: s19.y }],
+        pointBackgroundColor: '#0F6E56',
+        pointBorderColor: '#0F6E56',
+        pointRadius: 7,
+        pointStyle: 'circle'
+      },
+      {
+        label: 'Origin',
+        data: [{ x: 0, y: 0 }],
+        pointBackgroundColor: isDark ? '#666' : '#999',
+        pointRadius: 4,
+        pointStyle: 'crossRot'
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: function(ctx) {
+            const ds = ctx.dataset.label;
+            if (ds === 'Step 18.129') return '★ Step 18.129: (−0.00366, −0.00075i) at 191.61°';
+            if (ds === 'Step 18') return 'Step 18: (−0.00391, 0i) at 180°';
+            if (ds === 'Step 19') return 'Step 19: (0, −0.00276i) at 270°';
+            return ds;
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        title: { display: true, text: 'Real', color: isDark ? '#aaa' : '#666' },
+        grid: { color: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' },
+        ticks: { color: isDark ? '#aaa' : '#666' }
+      },
+      y: {
+        title: { display: true, text: 'Imaginary', color: isDark ? '#aaa' : '#666' },
+        grid: { color: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' },
+        ticks: { color: isDark ? '#aaa' : '#666' }
+      }
+    }
+  }
+});
+
+const legendHtml = `
+<div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; font-size: 12px; color: var(--color-text-secondary);">
+  <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#D85A30;"></span>Step 18.129 (−0.00366, −0.00075i)</span>
+  <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#0F6E56;"></span>Steps 18 and 19</span>
+  <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:#534AB7;"></span>Arc between 17–19</span>
+</div>`;
+document.getElementById('landingChart').parentElement.insertAdjacentHTML('afterend', legendHtml);
+</script>

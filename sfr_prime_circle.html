@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SFR Prime Circle — Cascade Geometry</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0f;
+    color: #c8c8d4;
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    gap: 16px;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    color: #e0e0f0;
+    letter-spacing: 0.02em;
+    text-align: center;
+  }
+
+  h1 span {
+    color: #6a8cff;
+    font-style: italic;
+  }
+
+  .subtitle {
+    font-size: 0.72rem;
+    color: #666680;
+    text-align: center;
+    max-width: 600px;
+    line-height: 1.5;
+  }
+
+  .canvas-wrapper {
+    position: relative;
+    border: 1px solid #1a1a2e;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #06060c;
+  }
+
+  canvas {
+    display: block;
+    cursor: crosshair;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+    max-width: 800px;
+    padding: 16px 20px;
+    background: #0e0e18;
+    border: 1px solid #1a1a2e;
+    border-radius: 8px;
+  }
+
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 140px;
+  }
+
+  .control-group label {
+    font-size: 0.65rem;
+    color: #555570;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .control-group .value {
+    font-size: 0.8rem;
+    color: #8888aa;
+    font-weight: 600;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 3px;
+    background: #1a1a2e;
+    border-radius: 2px;
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #6a8cff;
+    cursor: pointer;
+    border: 2px solid #0a0a0f;
+  }
+
+  .preset-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .preset-btn {
+    background: #12122a;
+    border: 1px solid #2a2a4a;
+    color: #8888bb;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .preset-btn:hover {
+    background: #1a1a3a;
+    border-color: #6a8cff;
+    color: #c0c0ee;
+  }
+
+  .preset-btn.active {
+    background: #1a1a40;
+    border-color: #6a8cff;
+    color: #e0e0ff;
+    box-shadow: 0 0 8px rgba(106, 140, 255, 0.2);
+  }
+
+  .legend {
+    display: flex;
+    gap: 20px;
+    font-size: 0.68rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .stats {
+    font-size: 0.68rem;
+    color: #555570;
+    text-align: center;
+  }
+
+  .equation {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    color: #8888bb;
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 8px 16px;
+    border: 1px solid #1a1a2e;
+    border-radius: 4px;
+    background: #0a0a15;
+  }
+
+  .toggle-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .toggle-label {
+    font-size: 0.68rem;
+    color: #666680;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .toggle-label input {
+    accent-color: #6a8cff;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>SFR <span>Prime Circle</span></h1>
+  <div class="subtitle">
+    Cascade geometry: each integer placed by the G1 rotation (π/4 per tick) at radius n<sup>½</sup> from the critical-line exponent. The substrate axis (green) remains untouched by primes.
+  </div>
+
+  <div class="equation" id="equationDisplay">
+    θ(n) = n · π/4 &nbsp;&nbsp;|&nbsp;&nbsp; r(n) = n<sup>0.50</sup> &nbsp;&nbsp;|&nbsp;&nbsp; 8-fold cascade symmetry
+  </div>
+
+  <div class="preset-buttons">
+    <button class="preset-btn active" onclick="setPreset('cascade')">SFR Cascade (π/4)</button>
+    <button class="preset-btn" onclick="setPreset('golden')">Golden Angle</button>
+    <button class="preset-btn" onclick="setPreset('sacks')">Sacks (√n · 2π)</button>
+    <button class="preset-btn" onclick="setPreset('log')">Log Spiral</button>
+    <button class="preset-btn" onclick="setPreset('cascade6')">6-fold (π/3)</button>
+  </div>
+
+  <div class="controls">
+    <div class="control-group">
+      <label>Angle multiplier</label>
+      <input type="range" id="angleSlider" min="0.01" max="3.15" step="0.001" value="0.7854">
+      <span class="value" id="angleValue">π/4 = 0.7854</span>
+    </div>
+    <div class="control-group">
+      <label>Radius exponent</label>
+      <input type="range" id="radiusSlider" min="0.1" max="1.0" step="0.01" value="0.50">
+      <span class="value" id="radiusValue">0.50 (critical line)</span>
+    </div>
+    <div class="control-group">
+      <label>Max integer N</label>
+      <input type="range" id="countSlider" min="500" max="30000" step="100" value="10000">
+      <span class="value" id="countValue">10,000</span>
+    </div>
+    <div class="control-group">
+      <label>Dot size</label>
+      <input type="range" id="dotSlider" min="0.5" max="4.0" step="0.1" value="1.5">
+      <span class="value" id="dotValue">1.5</span>
+    </div>
+    <div class="toggle-row">
+      <label class="toggle-label"><input type="checkbox" id="showComposites" checked> Composites</label>
+      <label class="toggle-label"><input type="checkbox" id="showAxes" checked> Axes</label>
+      <label class="toggle-label"><input type="checkbox" id="showOmega" > Color by Ω</label>
+    </div>
+  </div>
+
+  <div class="canvas-wrapper">
+    <canvas id="primeCanvas" width="780" height="780"></canvas>
+  </div>
+
+  <div class="legend" id="legendRow">
+    <div class="legend-item"><div class="legend-dot" style="background:#e8e8ff"></div> Prime (substrate)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#2a2a3a"></div> Composite (frame)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(40,220,120,0.5); width:2px; height:16px; border-radius:1px"></div> Substrate axis</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(255,80,100,0.3); width:2px; height:16px; border-radius:1px"></div> Cascade lines (45°)</div>
+  </div>
+
+  <div class="stats" id="statsDisplay"></div>
+</div>
+
+<script>
+// Prime sieve
+function sieve(max) {
+  const isPrime = new Uint8Array(max + 1);
+  isPrime.fill(1);
+  isPrime[0] = isPrime[1] = 0;
+  for (let i = 2; i * i <= max; i++) {
+    if (isPrime[i]) {
+      for (let j = i * i; j <= max; j += i) isPrime[j] = 0;
+    }
+  }
+  return isPrime;
+}
+
+// Omega function (number of prime factors with multiplicity)
+function computeOmega(max) {
+  const omega = new Uint8Array(max + 1);
+  for (let i = 2; i <= max; i++) {
+    if (omega[i] === 0) { // prime
+      for (let j = i; j <= max; j += i) {
+        let temp = j;
+        while (temp % i === 0) {
+          omega[j]++;
+          temp /= i;
+        }
+      }
+    }
+  }
+  return omega;
+}
+
+const MAX_N = 30000;
+const isPrime = sieve(MAX_N);
+const omegaArr = computeOmega(MAX_N);
+
+const canvas = document.getElementById('primeCanvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const cx = W / 2, cy = H / 2;
+
+// Omega color palette
+const omegaColors = [
+  '#222233', // 0 (n=1)
+  '#e8e8ff', // 1 primes
+  '#4488ff', // 2 semiprimes
+  '#44ddaa', // 3
+  '#ddaa44', // 4
+  '#dd5577', // 5
+  '#aa44dd', // 6
+  '#ff8844', // 7+
+];
+
+function getOmegaColor(n) {
+  if (n <= 1) return omegaColors[0];
+  const o = Math.min(omegaArr[n], 7);
+  return omegaColors[o];
+}
+
+let currentPreset = 'cascade';
+
+function setPreset(name) {
+  currentPreset = name;
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+
+  const angleSlider = document.getElementById('angleSlider');
+  const radiusSlider = document.getElementById('radiusSlider');
+
+  switch(name) {
+    case 'cascade':
+      angleSlider.value = Math.PI / 4;
+      radiusSlider.value = 0.50;
+      break;
+    case 'golden':
+      angleSlider.value = 2.39996; // golden angle in radians
+      radiusSlider.value = 0.50;
+      break;
+    case 'sacks':
+      angleSlider.value = -1; // special flag
+      radiusSlider.value = 0.50;
+      break;
+    case 'log':
+      angleSlider.value = -2; // special flag
+      radiusSlider.value = 0.50;
+      break;
+    case 'cascade6':
+      angleSlider.value = Math.PI / 3;
+      radiusSlider.value = 0.50;
+      break;
+  }
+  updateAll();
+}
+
+function getAngle(n) {
+  const v = parseFloat(document.getElementById('angleSlider').value);
+  if (currentPreset === 'sacks') {
+    return Math.sqrt(n) * 2 * Math.PI;
+  }
+  if (currentPreset === 'log') {
+    return Math.log2(Math.max(n, 1)) * 2 * Math.PI;
+  }
+  return n * v;
+}
+
+function getRadius(n) {
+  const exp = parseFloat(document.getElementById('radiusSlider').value);
+  if (currentPreset === 'sacks') {
+    return Math.sqrt(n);
+  }
+  return Math.pow(n, exp);
+}
+
+function draw() {
+  const N = parseInt(document.getElementById('countSlider').value);
+  const dotSize = parseFloat(document.getElementById('dotSlider').value);
+  const showComp = document.getElementById('showComposites').checked;
+  const showAxes = document.getElementById('showAxes').checked;
+  const showOmega = document.getElementById('showOmega').checked;
+
+  ctx.fillStyle = '#06060c';
+  ctx.fillRect(0, 0, W, H);
+
+  // Compute max radius for scaling
+  let maxR = getRadius(N);
+  const scale = (Math.min(W, H) / 2 - 20) / maxR;
+
+  // Draw axes
+  if (showAxes) {
+    ctx.save();
+    // Substrate axis (vertical green)
+    ctx.strokeStyle = 'rgba(40, 220, 120, 0.25)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, 0);
+    ctx.lineTo(cx, H);
+    ctx.stroke();
+
+    // Glow
+    ctx.strokeStyle = 'rgba(40, 220, 120, 0.08)';
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.moveTo(cx, 0);
+    ctx.lineTo(cx, H);
+    ctx.stroke();
+
+    // Cascade lines (45° intervals)
+    const angleStep = Math.PI / 4;
+    for (let i = 0; i < 8; i++) {
+      const a = i * angleStep;
+      if (Math.abs(a - Math.PI/2) < 0.01 || Math.abs(a - 3*Math.PI/2) < 0.01) continue; // skip vertical, already drawn
+      const dx = Math.cos(a) * (W/2 + 20);
+      const dy = Math.sin(a) * (H/2 + 20);
+      ctx.strokeStyle = i % 2 === 0 ? 'rgba(255, 80, 100, 0.15)' : 'rgba(255, 80, 100, 0.08)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx - dx, cy - dy);
+      ctx.lineTo(cx + dx, cy + dy);
+      ctx.stroke();
+    }
+
+    // Horizontal real axis
+    ctx.strokeStyle = 'rgba(255, 80, 100, 0.15)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, cy);
+    ctx.lineTo(W, cy);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  // Draw concentric reference circles
+  ctx.save();
+  const circleSteps = [100, 500, 1000, 2500, 5000, 10000, 20000];
+  for (const cs of circleSteps) {
+    if (cs > N) break;
+    const cr = getRadius(cs) * scale;
+    ctx.strokeStyle = 'rgba(60, 60, 90, 0.15)';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, cr, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // Count primes
+  let primeCount = 0;
+
+  // Draw composites first (behind)
+  if (showComp) {
+    for (let n = 2; n <= N; n++) {
+      if (isPrime[n]) continue;
+      const angle = getAngle(n);
+      const r = getRadius(n) * scale;
+      const x = cx + r * Math.cos(angle - Math.PI/2);
+      const y = cy - r * Math.sin(angle - Math.PI/2);
+
+      if (showOmega) {
+        ctx.fillStyle = getOmegaColor(n);
+        const oSize = dotSize * (0.6 + 0.15 * Math.min(omegaArr[n], 5));
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        ctx.arc(x, y, oSize, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1.0;
+      } else {
+        ctx.fillStyle = 'rgba(50, 50, 70, 0.4)';
+        ctx.beginPath();
+        ctx.arc(x, y, dotSize * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  // Draw primes on top
+  for (let n = 2; n <= N; n++) {
+    if (!isPrime[n]) continue;
+    primeCount++;
+    const angle = getAngle(n);
+    const r = getRadius(n) * scale;
+    const x = cx + r * Math.cos(angle - Math.PI/2);
+    const y = cy - r * Math.sin(angle - Math.PI/2);
+
+    if (showOmega) {
+      ctx.fillStyle = omegaColors[1];
+    } else {
+      ctx.fillStyle = '#e8e8ff';
+    }
+    ctx.beginPath();
+    ctx.arc(x, y, dotSize, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Slight glow for primes
+    ctx.fillStyle = 'rgba(232, 232, 255, 0.15)';
+    ctx.beginPath();
+    ctx.arc(x, y, dotSize * 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Center dot
+  ctx.fillStyle = '#6a8cff';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Stats
+  const density = (primeCount / N * 100).toFixed(2);
+  const expected = (100 / Math.log(N)).toFixed(2);
+  document.getElementById('statsDisplay').textContent =
+    `${primeCount.toLocaleString()} primes in ${N.toLocaleString()} integers (${density}%) · PNT prediction: ${expected}% · Ω range: 0–${omegaArr[N]}`;
+}
+
+function updateAll() {
+  const angleSlider = document.getElementById('angleSlider');
+  const radiusSlider = document.getElementById('radiusSlider');
+  const countSlider = document.getElementById('countSlider');
+  const dotSlider = document.getElementById('dotSlider');
+
+  const aVal = parseFloat(angleSlider.value);
+  let angleText;
+  if (currentPreset === 'sacks') {
+    angleText = '√n · 2π (Sacks)';
+  } else if (currentPreset === 'log') {
+    angleText = 'log₂(n) · 2π';
+  } else {
+    const piMult = (aVal / Math.PI).toFixed(4);
+    angleText = `${piMult}π = ${aVal.toFixed(4)}`;
+    // check for nice fractions
+    if (Math.abs(aVal - Math.PI/4) < 0.002) angleText = 'π/4 = 0.7854 (cascade)';
+    if (Math.abs(aVal - Math.PI/3) < 0.002) angleText = 'π/3 = 1.0472 (6-fold)';
+    if (Math.abs(aVal - Math.PI/6) < 0.002) angleText = 'π/6 = 0.5236 (12-fold)';
+    if (Math.abs(aVal - 2.39996) < 0.005) angleText = '≈ golden angle';
+  }
+  document.getElementById('angleValue').textContent = angleText;
+
+  const rVal = parseFloat(radiusSlider.value);
+  let rText = rVal.toFixed(2);
+  if (Math.abs(rVal - 0.5) < 0.005) rText = '0.50 (critical line ½)';
+  document.getElementById('radiusValue').textContent = rText;
+
+  document.getElementById('countValue').textContent = parseInt(countSlider.value).toLocaleString();
+  document.getElementById('dotValue').textContent = parseFloat(dotSlider.value).toFixed(1);
+
+  // Update equation display
+  let eqText;
+  if (currentPreset === 'sacks') {
+    eqText = `θ(n) = √n · 2π  |  r(n) = √n  |  Sacks spiral`;
+  } else if (currentPreset === 'log') {
+    eqText = `θ(n) = log₂(n) · 2π  |  r(n) = n^${rVal.toFixed(2)}  |  logarithmic spiral`;
+  } else {
+    eqText = `θ(n) = n · ${angleText.split('=')[0].trim()}  |  r(n) = n^${rVal.toFixed(2)}  |  `;
+    if (currentPreset === 'cascade') eqText += '8-fold cascade symmetry';
+    else if (currentPreset === 'cascade6') eqText += '6-fold symmetry';
+    else if (currentPreset === 'golden') eqText += 'golden-angle packing';
+    else eqText += 'custom';
+  }
+  document.getElementById('equationDisplay').innerHTML = eqText;
+
+  // Update omega legend
+  const showOmega = document.getElementById('showOmega').checked;
+  const legend = document.getElementById('legendRow');
+  if (showOmega) {
+    legend.innerHTML = `
+      <div class="legend-item"><div class="legend-dot" style="background:${omegaColors[1]}"></div> Ω=1 (prime)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:${omegaColors[2]}"></div> Ω=2 (semiprime)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:${omegaColors[3]}"></div> Ω=3</div>
+      <div class="legend-item"><div class="legend-dot" style="background:${omegaColors[4]}"></div> Ω=4</div>
+      <div class="legend-item"><div class="legend-dot" style="background:${omegaColors[5]}"></div> Ω=5+</div>
+    `;
+  } else {
+    legend.innerHTML = `
+      <div class="legend-item"><div class="legend-dot" style="background:#e8e8ff"></div> Prime (substrate)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#2a2a3a"></div> Composite (frame)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(40,220,120,0.5); width:2px; height:16px; border-radius:1px"></div> Substrate axis</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(255,80,100,0.3); width:2px; height:16px; border-radius:1px"></div> Cascade lines (45°)</div>
+    `;
+  }
+
+  draw();
+}
+
+// Event listeners
+document.getElementById('angleSlider').addEventListener('input', () => {
+  currentPreset = 'custom';
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  updateAll();
+});
+document.getElementById('radiusSlider').addEventListener('input', updateAll);
+document.getElementById('countSlider').addEventListener('input', updateAll);
+document.getElementById('dotSlider').addEventListener('input', updateAll);
+document.getElementById('showComposites').addEventListener('change', updateAll);
+document.getElementById('showAxes').addEventListener('change', updateAll);
+document.getElementById('showOmega').addEventListener('change', updateAll);
+
+// Initial draw
+updateAll();
+</script>
+</body>
+</html>

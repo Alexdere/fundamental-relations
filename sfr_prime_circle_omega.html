@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SFR Prime Circle — From ω = (1+i)/2</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #060610;
+    color: #b8b8cc;
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+  }
+
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  h1 {
+    font-family: 'Crimson Pro', serif;
+    font-size: 1.5rem;
+    color: #d8d8f0;
+    letter-spacing: 0.02em;
+    text-align: center;
+  }
+  h1 em { color: #7a9cff; }
+
+  .derivation-box {
+    max-width: 720px;
+    width: 100%;
+    background: #0a0a18;
+    border: 1px solid #1a1a30;
+    border-radius: 6px;
+    padding: 14px 18px;
+    font-size: 0.7rem;
+    line-height: 1.7;
+    color: #8888a8;
+  }
+  .derivation-box .op { color: #7a9cff; font-weight: 600; }
+  .derivation-box .derived { color: #60cc90; }
+  .derivation-box .arrow { color: #555; }
+  .derivation-box .axiom { color: #cc8844; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; }
+
+  .canvas-wrap {
+    position: relative;
+    border: 1px solid #14142a;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #040408;
+  }
+  canvas { display: block; cursor: crosshair; }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    justify-content: center;
+    max-width: 720px;
+    padding: 12px 16px;
+    background: #0a0a18;
+    border: 1px solid #1a1a30;
+    border-radius: 6px;
+  }
+  .ctrl {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .ctrl label {
+    font-size: 0.6rem;
+    color: #555570;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .ctrl .val {
+    font-size: 0.72rem;
+    color: #7a9cff;
+    font-weight: 600;
+  }
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 130px;
+    height: 2px;
+    background: #1a1a30;
+    border-radius: 2px;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: #7a9cff;
+    border: 2px solid #060610;
+    cursor: pointer;
+  }
+
+  .toggle-row {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .toggle-row label {
+    font-size: 0.65rem;
+    color: #666680;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .toggle-row input { accent-color: #7a9cff; }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    font-size: 0.63rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    color: #666680;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .ldot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .lline {
+    width: 2px; height: 14px;
+    border-radius: 1px;
+    flex-shrink: 0;
+  }
+
+  .stats {
+    font-size: 0.62rem;
+    color: #444460;
+    text-align: center;
+  }
+
+  #tooltip {
+    position: absolute;
+    display: none;
+    background: rgba(8,8,20,0.94);
+    border: 1px solid #2a2a50;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 0.65rem;
+    color: #aaaacc;
+    pointer-events: none;
+    z-index: 10;
+    backdrop-filter: blur(8px);
+  }
+  #tooltip .tn { color: #7a9cff; font-weight: 600; }
+  #tooltip .tp { color: #60cc90; }
+  #tooltip .tc { color: #cc8844; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>SFR Prime Circle — <em>from ω = (1+i)/2</em></h1>
+
+  <div class="derivation-box">
+    <span class="axiom">G1 + G4</span> <span class="arrow">→</span>
+    <span class="op">ω = (1+i)/2</span> <span class="arrow">&nbsp;⟹&nbsp;</span>
+    arg(ω) = <span class="derived">π/4</span> ,&ensp;
+    |ω|² = <span class="derived">½</span> ,&ensp;
+    2π/arg(ω) = <span class="derived">8</span><br>
+    <span class="axiom">Placement</span> <span class="arrow">→</span>
+    z(n) = n<sup><span class="derived">|ω|²</span></sup> · e<sup>i·n·<span class="derived">arg(ω)</span></sup>
+    = <span class="op">√n · e<sup>inπ/4</sup></span>
+    &ensp;|&ensp; Zero free parameters. Every value from ω.
+  </div>
+
+  <div class="controls">
+    <div class="ctrl">
+      <label>Max N</label>
+      <input type="range" id="sliderN" min="500" max="30000" step="100" value="12000">
+      <span class="val" id="valN">12,000</span>
+    </div>
+    <div class="ctrl">
+      <label>Dot size</label>
+      <input type="range" id="sliderDot" min="0.4" max="3.5" step="0.1" value="1.4">
+      <span class="val" id="valDot">1.4</span>
+    </div>
+  </div>
+
+  <div class="toggle-row">
+    <label><input type="checkbox" id="chkComp" checked> Composites</label>
+    <label><input type="checkbox" id="chkAxes" checked> Cascade axes</label>
+    <label><input type="checkbox" id="chkOmega"> Color by Ω</label>
+    <label><input type="checkbox" id="chkRings" checked> Reference rings</label>
+    <label><input type="checkbox" id="chkLabels"> Arm labels</label>
+  </div>
+
+  <div class="canvas-wrap">
+    <canvas id="cv" width="780" height="780"></canvas>
+    <div id="tooltip"></div>
+  </div>
+
+  <div class="legend" id="legendBox">
+    <div class="legend-item"><div class="ldot" style="background:#e0e0ff"></div> Prime (Ω=1)</div>
+    <div class="legend-item"><div class="ldot" style="background:rgba(80,80,110,0.6)"></div> Composite</div>
+    <div class="legend-item"><div class="lline" style="background:rgba(40,220,120,0.4)"></div> Substrate axis (n mod 8 ∈ {2,6})</div>
+    <div class="legend-item"><div class="lline" style="background:rgba(255,80,100,0.25)"></div> Cascade arms (45° from ω)</div>
+  </div>
+
+  <div class="stats" id="statsBox"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// SIEVE + OMEGA
+// ═══════════════════════════════════════════
+const MAX = 30000;
+const isPrime = new Uint8Array(MAX + 1);
+isPrime.fill(1); isPrime[0] = isPrime[1] = 0;
+for (let i = 2; i * i <= MAX; i++)
+  if (isPrime[i]) for (let j = i * i; j <= MAX; j += i) isPrime[j] = 0;
+
+const omega = new Uint8Array(MAX + 1);
+for (let i = 2; i <= MAX; i++) {
+  if (omega[i] === 0) {
+    for (let j = i; j <= MAX; j += i) {
+      let t = j;
+      while (t % i === 0) { omega[j]++; t /= i; }
+    }
+  }
+}
+
+// ═══════════════════════════════════════════
+// FRAMEWORK CONSTANTS — all from ω = (1+i)/2
+// ═══════════════════════════════════════════
+const ARG_OMEGA = Math.PI / 4;        // arg(ω) = π/4    ← forced by G1+G4
+const MAG_SQ    = 0.5;                // |ω|² = ½        ← computed from ω
+const P_FRAME   = 8;                  // 2π / arg(ω)     ← cascade period
+
+// ═══════════════════════════════════════════
+// PLACEMENT: z(n) = n^(|ω|²) · e^(i·n·arg(ω))
+// ═══════════════════════════════════════════
+function placeN(n) {
+  return {
+    r:     Math.pow(n, MAG_SQ),   // n^(½)  — from |ω|²
+    theta: n * ARG_OMEGA          // n·π/4  — from arg(ω)
+  };
+}
+
+// ═══════════════════════════════════════════
+// Ω COLOR PALETTE
+// ═══════════════════════════════════════════
+const omgCol = [
+  [34,34,50],      // Ω=0
+  [224,224,255],    // Ω=1 primes
+  [70,136,255],     // Ω=2 semiprimes
+  [60,210,160],     // Ω=3
+  [220,170,60],     // Ω=4
+  [220,80,110],     // Ω=5
+  [170,70,220],     // Ω=6
+  [255,136,68],     // Ω=7+
+];
+
+// ═══════════════════════════════════════════
+// CANVAS
+// ═══════════════════════════════════════════
+const cv  = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+const cx = W / 2, cy = H / 2;
+
+let pointData = [];
+
+function draw() {
+  const N       = +document.getElementById('sliderN').value;
+  const dotR    = +document.getElementById('sliderDot').value;
+  const showC   = document.getElementById('chkComp').checked;
+  const showAx  = document.getElementById('chkAxes').checked;
+  const showO   = document.getElementById('chkOmega').checked;
+  const showRi  = document.getElementById('chkRings').checked;
+  const showLbl = document.getElementById('chkLabels').checked;
+
+  ctx.fillStyle = '#040408';
+  ctx.fillRect(0, 0, W, H);
+
+  const maxR  = Math.pow(N, MAG_SQ);
+  const scale = (Math.min(W, H) / 2 - 24) / maxR;
+
+  pointData = [];
+
+  // ── Reference rings ──
+  if (showRi) {
+    const ringNs = [100, 500, 1000, 2500, 5000, 10000, 20000];
+    ctx.save();
+    for (const rn of ringNs) {
+      if (rn > N) break;
+      const cr = Math.pow(rn, MAG_SQ) * scale;
+      ctx.strokeStyle = 'rgba(50,50,80,0.18)';
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, cr, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(80,80,120,0.3)';
+      ctx.font = '9px JetBrains Mono';
+      ctx.fillText(rn.toLocaleString(), cx + cr + 3, cy - 3);
+    }
+    ctx.restore();
+  }
+
+  // ── Cascade axes (8 arms from ω) ──
+  if (showAx) {
+    ctx.save();
+    const armLen = maxR * scale + 20;
+    for (let k = 0; k < P_FRAME; k++) {
+      const a = k * ARG_OMEGA - Math.PI / 2;
+      const dx = Math.cos(a) * armLen;
+      const dy = Math.sin(a) * armLen;
+
+      const isSubstrate = (k === 2 || k === 6);
+      const isFrame     = (k === 0 || k === 4);
+
+      if (isSubstrate) {
+        ctx.strokeStyle = 'rgba(40,220,120,0.06)';
+        ctx.lineWidth = 12;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + dx, cy + dy); ctx.stroke();
+        ctx.strokeStyle = 'rgba(40,220,120,0.3)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + dx, cy + dy); ctx.stroke();
+      } else if (isFrame) {
+        ctx.strokeStyle = 'rgba(255,80,100,0.18)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + dx, cy + dy); ctx.stroke();
+      } else {
+        ctx.strokeStyle = 'rgba(255,80,100,0.08)';
+        ctx.lineWidth = 0.7;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + dx, cy + dy); ctx.stroke();
+      }
+
+      if (showLbl) {
+        const lx = cx + Math.cos(a) * (armLen + 14);
+        const ly = cy + Math.sin(a) * (armLen + 14);
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.font = '9px JetBrains Mono';
+        if (isSubstrate) {
+          ctx.fillStyle = 'rgba(40,220,120,0.6)';
+          ctx.fillText(`arm ${k} (even — no primes)`, lx, ly);
+        } else {
+          ctx.fillStyle = 'rgba(160,160,200,0.3)';
+          const poss = (k % 2 === 1) ? 'odd — primes live here' : 'even — no primes';
+          ctx.fillText(`arm ${k} (${poss})`, lx, ly);
+        }
+      }
+    }
+    ctx.restore();
+  }
+
+  // ── Composites ──
+  let primeCount = 0;
+  if (showC) {
+    for (let n = 4; n <= N; n++) {
+      if (isPrime[n]) continue;
+      const { r, theta } = placeN(n);
+      const px = cx + r * scale * Math.cos(theta - Math.PI / 2);
+      const py = cy + r * scale * Math.sin(theta - Math.PI / 2);
+
+      if (showO) {
+        const oi = Math.min(omega[n], 7);
+        const c = omgCol[oi];
+        ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},0.35)`;
+        ctx.beginPath();
+        ctx.arc(px, py, dotR * (0.55 + 0.12 * oi), 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.fillStyle = 'rgba(45,45,65,0.35)';
+        ctx.beginPath();
+        ctx.arc(px, py, dotR * 0.65, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      pointData.push({ n, x: px, y: py, prime: false });
+    }
+  }
+
+  // ── Primes ──
+  for (let n = 2; n <= N; n++) {
+    if (!isPrime[n]) continue;
+    primeCount++;
+    const { r, theta } = placeN(n);
+    const px = cx + r * scale * Math.cos(theta - Math.PI / 2);
+    const py = cy + r * scale * Math.sin(theta - Math.PI / 2);
+
+    ctx.fillStyle = 'rgba(200,200,255,0.08)';
+    ctx.beginPath();
+    ctx.arc(px, py, dotR * 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = showO ? `rgb(${omgCol[1].join(',')})` : '#e0e0ff';
+    ctx.beginPath();
+    ctx.arc(px, py, dotR, 0, Math.PI * 2);
+    ctx.fill();
+
+    pointData.push({ n, x: px, y: py, prime: true });
+  }
+
+  // κ-hinge at center
+  ctx.fillStyle = '#7a9cff';
+  ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'rgba(122,156,255,0.15)';
+  ctx.beginPath(); ctx.arc(cx, cy, 10, 0, Math.PI * 2); ctx.fill();
+
+  // Stats
+  document.getElementById('statsBox').textContent =
+    `${primeCount.toLocaleString()} primes in ${N.toLocaleString()} integers (${(primeCount/N*100).toFixed(2)}%) · ` +
+    `P_frame = ${P_FRAME} · arg(ω) = π/4 · |ω|² = ½`;
+
+  const lb = document.getElementById('legendBox');
+  if (showO) {
+    lb.innerHTML = [
+      dot(omgCol[1],'Ω=1 prime'), dot(omgCol[2],'Ω=2 semiprime'),
+      dot(omgCol[3],'Ω=3'), dot(omgCol[4],'Ω=4'), dot(omgCol[5],'Ω≥5'),
+      line('rgba(40,220,120,0.4)','Substrate (even arms)')
+    ].join('');
+  } else {
+    lb.innerHTML = [
+      dot([224,224,255],'Prime (Ω=1)'), dot([80,80,110],'Composite'),
+      line('rgba(40,220,120,0.4)','Substrate axis'), line('rgba(255,80,100,0.25)','Cascade arms (45°)')
+    ].join('');
+  }
+}
+
+function dot(c,t){ return `<div class="legend-item"><div class="ldot" style="background:rgb(${c})"></div> ${t}</div>`; }
+function line(c,t){ return `<div class="legend-item"><div class="lline" style="background:${c}"></div> ${t}</div>`; }
+
+// ═══════════════════════════════════════════
+// TOOLTIP
+// ═══════════════════════════════════════════
+const tip = document.getElementById('tooltip');
+cv.addEventListener('mousemove', (e) => {
+  const rect = cv.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (W / rect.width);
+  const my = (e.clientY - rect.top) * (H / rect.height);
+
+  let closest = null, minD = 100;
+  for (const p of pointData) {
+    const d = Math.hypot(p.x - mx, p.y - my);
+    if (d < minD) { minD = d; closest = p; }
+  }
+
+  if (closest && minD < 12) {
+    const n = closest.n;
+    const arm = ((n % P_FRAME) + P_FRAME) % P_FRAME;
+    const typeStr = closest.prime
+      ? `<span class="tp">PRIME</span> (Ω=1)`
+      : `<span class="tc">composite</span> (Ω=${omega[n]})`;
+
+    let factors = '';
+    if (!closest.prime) {
+      let temp = n, facs = [];
+      for (let d = 2; d * d <= temp; d++) {
+        let count = 0;
+        while (temp % d === 0) { count++; temp /= d; }
+        if (count > 0) facs.push(count > 1 ? `${d}<sup>${count}</sup>` : `${d}`);
+      }
+      if (temp > 1) facs.push(`${temp}`);
+      factors = ` = ${facs.join(' × ')}`;
+    }
+
+    tip.innerHTML = `<span class="tn">n = ${n}</span>${factors}<br>` +
+      `${typeStr}<br>` +
+      `arm ${arm} mod ${P_FRAME} · θ = ${arm*45}°<br>` +
+      `r = n<sup>|ω|²</sup> = √${n} ≈ ${Math.sqrt(n).toFixed(2)}`;
+
+    tip.style.display = 'block';
+    const wr = cv.parentElement.getBoundingClientRect();
+    tip.style.left = (e.clientX - wr.left + 14) + 'px';
+    tip.style.top  = (e.clientY - wr.top - 10) + 'px';
+  } else {
+    tip.style.display = 'none';
+  }
+});
+cv.addEventListener('mouseleave', () => tip.style.display = 'none');
+
+// ═══════════════════════════════════════════
+// CONTROLS
+// ═══════════════════════════════════════════
+function update() {
+  document.getElementById('valN').textContent = (+document.getElementById('sliderN').value).toLocaleString();
+  document.getElementById('valDot').textContent = (+document.getElementById('sliderDot').value).toFixed(1);
+  draw();
+}
+
+document.getElementById('sliderN').addEventListener('input', update);
+document.getElementById('sliderDot').addEventListener('input', update);
+['chkComp','chkAxes','chkOmega','chkRings','chkLabels'].forEach(id =>
+  document.getElementById(id).addEventListener('change', draw));
+
+update();
+</script>
+</body>
+</html>

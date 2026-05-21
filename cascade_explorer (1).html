@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Cascade Prime Explorer</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a0f; color: #e0e0e0; font-family: 'Courier New', monospace; display: flex; height: 100vh; }
+  
+  #spiral-panel { flex: 1; position: relative; overflow: hidden; }
+  #spiral-panel canvas { width: 100%; height: 100%; }
+  
+  #data-panel { width: 420px; background: #111118; border-left: 1px solid #333; overflow-y: auto; font-size: 11px; }
+  #data-panel table { width: 100%; border-collapse: collapse; }
+  #data-panel th { background: #1a1a25; padding: 4px 6px; text-align: right; cursor: pointer; position: sticky; top: 0; z-index: 1; border-bottom: 2px solid #444; }
+  #data-panel th:hover { background: #2a2a35; }
+  #data-panel td { padding: 3px 6px; text-align: right; border-bottom: 1px solid #1a1a22; }
+  tr.prime { background: #0f1a0f; color: #4f4; font-weight: bold; }
+  tr.prime:hover { background: #1a2a1a; }
+  tr.composite { color: #666; }
+  tr.composite:hover { background: #151520; color: #999; }
+  tr.selected { background: #2a1a00 !important; outline: 1px solid #f80; }
+  tr.polar { color: #f44; }
+  
+  #info { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.85); padding: 12px; border: 1px solid #444; font-size: 12px; line-height: 1.6; max-width: 300px; pointer-events: none; }
+  #info.hidden { display: none; }
+  #controls { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.85); padding: 8px 12px; border: 1px solid #333; font-size: 11px; }
+  #controls label { margin-right: 12px; cursor: pointer; }
+  #controls input[type=range] { vertical-align: middle; }
+  .legend { position: absolute; top: 10px; right: 430px; background: rgba(0,0,0,0.85); padding: 8px; border: 1px solid #333; font-size: 11px; }
+  .legend div { margin: 2px 0; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<div id="spiral-panel">
+  <canvas id="canvas"></canvas>
+  <div id="info" class="hidden"></div>
+  <div id="controls">
+    <label>Range: <input type="range" id="range" min="10" max="200" value="64"> <span id="range-val">64</span></label>
+    <label>Zoom: <input type="range" id="zoom" min="1" max="200" value="50"> </label>
+    <label><input type="checkbox" id="showComposites" checked> composites</label>
+    <label><input type="checkbox" id="showAxes" checked> axes</label>
+    <label><input type="checkbox" id="showSpiral" checked> spiral line</label>
+  </div>
+  <div class="legend">
+    <div><span class="dot" style="background:#4f4"></span> Prime</div>
+    <div><span class="dot" style="background:#f44"></span> Polar zero (Re=0)</div>
+    <div><span class="dot" style="background:#555"></span> Composite</div>
+    <div><span class="dot" style="background:#ff0"></span> Prime 2 (on polar)</div>
+  </div>
+</div>
+
+<div id="data-panel">
+  <table id="data-table">
+    <thead><tr>
+      <th data-col="n">n</th>
+      <th data-col="p">P?</th>
+      <th data-col="re">Re</th>
+      <th data-col="im">Im</th>
+      <th data-col="mag">|z^n|</th>
+      <th data-col="angle">angle°</th>
+      <th data-col="m">m</th>
+      <th data-col="mod8">mod8</th>
+    </tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<script>
+// Sieve
+function sieve(N) {
+  const s = new Uint8Array(N+1).fill(1);
+  s[0]=s[1]=0;
+  for(let i=2;i*i<=N;i++) if(s[i]) for(let j=i*i;j<=N;j+=i) s[j]=0;
+  return s;
+}
+
+const MAX_N = 200;
+const isPrime = sieve(MAX_N);
+
+// Cascade values
+function cascadeAt(n) {
+  // ((1+i)/2)^n via repeated multiplication
+  let re = 1, im = 0;
+  const zr = 0.5, zi = 0.5;
+  for(let k = 0; k < n; k++) {
+    const nr = re*zr - im*zi;
+    const ni = re*zi + im*zr;
+    re = nr; im = ni;
+  }
+  return { re, im, mag: Math.sqrt(re*re+im*im), angle: Math.atan2(im, re)*180/Math.PI };
+}
+
+// Build data
+const data = [];
+for(let n=0; n<=MAX_N; n++) {
+  const c = cascadeAt(n);
+  const prime = n>=2 && isPrime[n];
+  const mod8 = n % 8;
+  const polar = (mod8===2 || mod8===6) && n>0;
+  let m = '-';
+  if(Math.abs(c.re) > 1e-30) m = Math.round(-Math.log2(Math.abs(c.re)));
+  else if(n>0) m = '∞';
+  data.push({ n, prime, re: c.re, im: c.im, mag: c.mag, angle: c.angle, m, mod8, polar });
+}
+
+// Populate table
+const tbody = document.getElementById('tbody');
+function renderTable() {
+  tbody.innerHTML = '';
+  for(const d of data) {
+    const tr = document.createElement('tr');
+    tr.className = d.prime ? 'prime' : (d.polar ? 'polar' : 'composite');
+    tr.dataset.n = d.n;
+    
+    const fmt = (v) => { 
+      if(Math.abs(v) < 1e-20) return '0';
+      return v.toExponential(6); 
+    };
+    
+    tr.innerHTML = `<td>${d.n}</td><td>${d.prime?'★':d.polar?'◯':''}</td><td>${fmt(d.re)}</td><td>${fmt(d.im)}</td><td>${fmt(d.mag)}</td><td>${d.angle.toFixed(1)}</td><td>${d.m}</td><td>${d.mod8}</td>`;
+    
+    tr.addEventListener('click', () => {
+      document.querySelectorAll('tr.selected').forEach(t=>t.classList.remove('selected'));
+      tr.classList.add('selected');
+      selectedN = d.n;
+      draw();
+    });
+    tr.addEventListener('mouseenter', () => { hoveredN = d.n; draw(); });
+    tr.addEventListener('mouseleave', () => { hoveredN = -1; draw(); });
+    tbody.appendChild(tr);
+  }
+}
+renderTable();
+
+// Sort
+document.querySelectorAll('th').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.col;
+    const key = {n:'n',p:'prime',re:'re',im:'im',mag:'mag',angle:'angle',m:'m',mod8:'mod8'}[col];
+    data.sort((a,b) => (typeof a[key]==='string'?0:a[key]) - (typeof b[key]==='string'?0:b[key]));
+    renderTable();
+  });
+});
+
+// Canvas drawing
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let selectedN = -1, hoveredN = -1;
+
+function draw() {
+  const W = canvas.width = canvas.parentElement.clientWidth;
+  const H = canvas.height = canvas.parentElement.clientHeight;
+  const cx = W/2, cy = H/2;
+  const zoomVal = document.getElementById('zoom').value;
+  const scale = Math.pow(1.1, zoomVal) * 0.5;
+  const rangeN = parseInt(document.getElementById('range').value);
+  const showComp = document.getElementById('showComposites').checked;
+  const showAxes = document.getElementById('showAxes').checked;
+  const showSpiral = document.getElementById('showSpiral').checked;
+  
+  ctx.fillStyle = '#0a0a0f';
+  ctx.fillRect(0, 0, W, H);
+  
+  const toScreen = (re, im) => [cx + re*scale*W, cy - im*scale*H];
+  
+  // Axes
+  if(showAxes) {
+    ctx.strokeStyle = '#1a1a2a';
+    ctx.lineWidth = 1;
+    // Real axis
+    ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
+    // Imaginary axis (POLAR)
+    ctx.strokeStyle = '#0a2a0a';
+    ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
+    // 45° diagonals
+    ctx.strokeStyle = '#1a1a1a';
+    ctx.beginPath(); ctx.moveTo(0,H); ctx.lineTo(W,0); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(W,H); ctx.stroke();
+  }
+  
+  // Spiral line
+  if(showSpiral) {
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    for(let i=0; i<=rangeN; i++) {
+      const d = data[i];
+      const [x,y] = toScreen(d.re, d.im);
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+  
+  // Points
+  for(let i=0; i<=rangeN && i<data.length; i++) {
+    const d = data[i];
+    if(!d.prime && !d.polar && !showComp) continue;
+    
+    const [x,y] = toScreen(d.re, d.im);
+    
+    let r = d.prime ? 5 : (d.polar ? 4 : 2);
+    let color = d.prime ? '#4f4' : (d.polar ? '#f44' : '#444');
+    
+    if(d.n === 2) { color = '#ff0'; r = 6; } // prime 2 special
+    if(d.n === hoveredN || d.n === selectedN) { r = 8; color = '#fff'; }
+    
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI*2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    
+    // Label primes
+    if(d.prime && scale > 1) {
+      ctx.fillStyle = '#aaa';
+      ctx.font = '9px monospace';
+      ctx.fillText(d.n, x+r+2, y-2);
+    }
+  }
+  
+  // Info for hovered/selected
+  const infoDiv = document.getElementById('info');
+  const showN = hoveredN >= 0 ? hoveredN : selectedN;
+  if(showN >= 0 && showN < data.length) {
+    const d = data[showN];
+    infoDiv.classList.remove('hidden');
+    infoDiv.innerHTML = `<b>n = ${d.n}</b> ${d.prime?'<span style="color:#4f4">★ PRIME</span>':''}${d.polar?'<span style="color:#f44">◯ POLAR ZERO</span>':''}<br>` +
+      `Re = ${d.re.toExponential(10)}<br>` +
+      `Im = ${d.im.toExponential(10)}<br>` +
+      `|z^n| = ${d.mag.toExponential(10)}<br>` +
+      `angle = ${d.angle.toFixed(1)}°<br>` +
+      `n mod 8 = ${d.mod8}<br>` +
+      `|Re| = 1/2^${d.m}`;
+  } else {
+    infoDiv.classList.add('hidden');
+  }
+}
+
+// Controls
+document.getElementById('range').addEventListener('input', e => { document.getElementById('range-val').textContent = e.target.value; draw(); });
+document.getElementById('zoom').addEventListener('input', draw);
+document.getElementById('showComposites').addEventListener('change', draw);
+document.getElementById('showAxes').addEventListener('change', draw);
+document.getElementById('showSpiral').addEventListener('change', draw);
+window.addEventListener('resize', draw);
+
+draw();
+</script>
+</body>
+</html>
