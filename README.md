@@ -72,6 +72,4 @@ If you work on the Collatz conjecture and find the ℚ(√2) connection interest
 
 This emerged from an ongoing exploratory project on the structural role of √2, i, and the cascade operator ω = (1+i)/2 in number theory. The project has produced other results (connections to prime gap distributions, the Pell algebra, spectral decompositions) documented separately. The Collatz connection was found on 2026-05-20 through the 3/(2√2) observation.
 
-## License
 
-Public domain. Use freely, cite if useful.
